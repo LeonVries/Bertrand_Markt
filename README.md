@@ -4,35 +4,40 @@
 
 ### Klassisches Bertrand-Modell
 
-- **Lineare Nachfragefunktion**: \( Q(p) = a - bp \)
+- **Lineare Nachfragefunktion**: \( Q(p) = a - b \cdot p \)
 - Verhalten:
-  - Bei \( p₁ < p₂ \): Firma 1 erhält die gesamte Nachfrage.
-  - Bei \( p₁ = p₂ \): Nachfrage wird gleichmäßig aufgeteilt (50/50).
-  - Bei \( p₁ > p₂ \): Firma 1 erhält keine Nachfrage.
+  - Bei \( p_1 < p_2 \): Firma 1 erhält die gesamte Nachfrage.
+  - Bei \( p_1 = p_2 \): Nachfrage wird gleichmäßig aufgeteilt (50/50).
+  - Bei \( p_1 > p_2 \): Firma 1 erhält keine Nachfrage.
 - Mathematisch ausgedrückt:
 
   \[
-  Q₁(p₁, p₂) = 
+  Q_1(p_1, p_2) = 
   \begin{cases} 
-  a - bp₁, & \text{wenn } p₁ < p₂ \\
-  \frac{a - bp₁}{2}, & \text{wenn } p₁ = p₂ \\
-  0, & \text{wenn } p₁ > p₂
+  a - b \cdot p_1, & \text{wenn } p_1 < p_2 \\
+  \frac{a - b \cdot p_1}{2}, & \text{wenn } p_1 = p_2 \\
+  0, & \text{wenn } p_1 > p_2
   \end{cases}
   \]
 
 ### Unser dynamisches Modell
 
-- **Grundnachfrage**: \( Q(p) = \text{market\_size} \cdot (1 - \frac{p}{\text{max\_price}}) \)
+- **Grundnachfrage**: 
+
+  \[
+  Q(p) = \text{market\_size} \cdot \left(1 - \frac{p}{\text{max\_price}}\right)
+  \]
+
 - **Logistische Marktaufteilung basierend auf Preisdifferenzen**:
 
   \[
-  \text{market\_share}(p₁, p₂) = \frac{1}{1 + e^{-\text{sensitivity} \cdot \frac{p₂ - p₁}{\frac{p₁ + p₂}{2}}}}
+  \text{market\_share}(p_1, p_2) = \frac{1}{1 + e^{-\text{sensitivity} \cdot \frac{p_2 - p_1}{\frac{p_1 + p_2}{2}}}}
   \]
 
 - Gesamtfunktion:
 
   \[
-  Q₁(p₁, p₂) = Q(p₁) \cdot \text{market\_share}(p₁, p₂)
+  Q_1(p_1, p_2) = Q(p_1) \cdot \text{market\_share}(p_1, p_2)
   \]
 
 ---
@@ -42,11 +47,11 @@
 ### Klassisches Bertrand-Modell
 
 \[
-\pi₁(p₁, p₂) = 
+\pi_1(p_1, p_2) = 
 \begin{cases} 
-(p₁ - c) \cdot (a - bp₁), & \text{wenn } p₁ < p₂ \\
-(p₁ - c) \cdot \frac{a - bp₁}{2}, & \text{wenn } p₁ = p₂ \\
-0, & \text{wenn } p₁ > p₂
+(p_1 - c) \cdot (a - b \cdot p_1), & \text{wenn } p_1 < p_2 \\
+(p_1 - c) \cdot \frac{a - b \cdot p_1}{2}, & \text{wenn } p_1 = p_2 \\
+0, & \text{wenn } p_1 > p_2
 \end{cases}
 \]
 
@@ -55,7 +60,7 @@
 ### Unser dynamisches Modell
 
 \[
-\pi₁(p₁, p₂) = (p₁ - c) \cdot \text{market\_size} \cdot \left(1 - \frac{p₁}{\text{max\_price}}\right) \cdot \text{market\_share}(p₁, p₂)
+\pi_1(p_1, p_2) = (p_1 - c) \cdot \text{market\_size} \cdot \left(1 - \frac{p_1}{\text{max\_price}}\right) \cdot \text{market\_share}(p_1, p_2)
 \]
 
 ---
@@ -66,7 +71,7 @@
 
 - **Verhalten**:
   - Sofortige Anpassung zum Nash-Gleichgewicht.
-  - Nash-Gleichgewicht bei \( p₁ = p₂ = c \).
+  - Nash-Gleichgewicht bei \( p_1 = p_2 = c \).
   - Keine explizite Zeitdynamik.
 
 ### Unser dynamisches Modell
@@ -75,10 +80,10 @@
 - Preisanpassungsregel:
 
   \[
-  p₁(t+1) = 
+  p_1(t+1) = 
   \begin{cases} 
-  \max(c, p₂(t) \cdot (1 - \text{random}(0, 0.08))), & \text{wenn } p₁(t) > p₂(t) \\
-  p₁(t), & \text{sonst}
+  \max(c, p_2(t) \cdot (1 - \text{random}(0, 0.08))), & \text{wenn } p_1(t) > p_2(t) \\
+  p_1(t), & \text{sonst}
   \end{cases}
   \]
 
@@ -108,13 +113,13 @@
 
 ### Klassisches Bertrand-Modell
 
-- Eindeutiges Nash-Gleichgewicht bei \( p₁ = p₂ = c \).
+- Eindeutiges Nash-Gleichgewicht bei \( p_1 = p_2 = c \).
 - Sofortige Konvergenz.
 - **"Bertrand-Paradox"**: Null-Gewinn im Gleichgewicht.
 
 ### Unser dynamisches Modell
 
-- Gleiches Nash-Gleichgewicht bei \( p₁ = p₂ = c \).
+- Gleiches Nash-Gleichgewicht bei \( p_1 = p_2 = c \).
 - Graduelle Konvergenz zum Gleichgewicht.
 - Positive Gewinne während des Anpassungsprozesses.
 - Realistischere Abbildung der Marktdynamik.
@@ -145,7 +150,7 @@
 ### Relative Preisdifferenzen:
 
 \[
-\text{price\_diff} = \frac{p₂ - p₁}{\frac{p₁ + p₂}{2}}
+\text{price\_diff} = \frac{p_2 - p_1}{\frac{p_1 + p_2}{2}}
 \]
 
 - Berücksichtigt relative statt absolute Preisunterschiede.
