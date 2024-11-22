@@ -149,7 +149,7 @@ Projekt Link: [https://github.com/LeonVries/basic](https://github.com/LeonVries/
 
 
 
-# Vergleich: Klassisches Bertrand-Modell vs. Dynamisches Modell
+# Im Detail: Klassisches Bertrand-Modell vs. Dynamisches Modell
 
 ## 1. Nachfragefunktion
 
