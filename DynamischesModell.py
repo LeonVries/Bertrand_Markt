@@ -11,71 +11,40 @@ class BertrandDynamics:
         market_size (float): Marktgröße (maximale Nachfrage)
         max_price (float): Maximaler Startpreis
         max_underbid (float): Maximale Unterbietung pro Zeiteinheit (default: 8%)
-        price_sensitivity (float): Wie stark Kunden auf Preisunterschiede reagieren
+        price_sensitivity (float): Wie stark reagieren Kunden auf Preisunterschiede
         """
-        self.mc = marginal_cost  # Grenzkosten
-        self.market_size = market_size  # Maximale Marktgröße
-        self.max_price = max_price  # Höchstpreis
-        self.max_underbid = max_underbid  # Maximale Preisanpassung in % (z. B. 8%)
-        self.price_sensitivity = price_sensitivity  # Preisempfindlichkeit der Kunden
+        self.mc = marginal_cost
+        self.market_size = market_size
+        self.max_price = max_price
+        self.max_underbid = max_underbid
+        self.price_sensitivity = price_sensitivity
         
     def market_share(self, own_price, other_price):
         """
-        Berechnet den Marktanteil eines Unternehmens basierend auf Preisunterschieden.
-        
-        Parameters:
-        own_price (float): Eigener Preis
-        other_price (float): Preis des Konkurrenten
-        
-        Returns:
-        float: Marktanteil des Unternehmens
+        Berechnet den Marktanteil basierend auf relativem Preisunterschied
+        Verwendet eine logistische Funktion für smoothe Übergänge
         """
-        # Prüfe, ob ein Preis den Maximalpreis überschreitet
         if own_price >= self.max_price or other_price >= self.max_price:
-            return 0  # Kein Marktanteil, wenn der Preis zu hoch ist
+            return 0
         
-        # Preisunterschied als relativer Wert, normalisiert auf den Durchschnitt
         price_diff = (other_price - own_price) / ((own_price + other_price) / 2)
-        
-        # Logistische Funktion für die Verteilung der Marktanteile
         share = 1 / (1 + np.exp(-self.price_sensitivity * price_diff))
         return share
         
     def demand(self, price, own_share):
-        """
-        Berechnet die Nachfrage basierend auf dem Preis und dem Marktanteil.
-        
-        Parameters:
-        price (float): Eigener Preis
-        own_share (float): Marktanteil
-        
-        Returns:
-        float: Nachfrage für das Unternehmen
-        """
-        # Lineare Nachfrage, die bei steigendem Preis abnimmt
+        """Lineare Nachfragefunktion mit Marktanteil"""
         base_demand = max(0, self.market_size * (1 - price/self.max_price))
-        return base_demand * own_share  # Nachfrage multipliziert mit Marktanteil
+        return base_demand * own_share
     
     def profit(self, own_price, other_price):
-        """
-        Berechnet den Gewinn eines Unternehmens.
-        
-        Parameters:
-        own_price (float): Eigener Preis
-        other_price (float): Preis des Konkurrenten
-        
-        Returns:
-        float: Gewinn
-        """
-        # Marktanteil und Nachfrage berechnen
+        """Berechnet den Gewinn eines Unternehmens"""
         share = self.market_share(own_price, other_price)
         quantity = self.demand(own_price, share)
-        # Gewinn = (Preis - Grenzkosten) * Menge
         return (own_price - self.mc) * quantity
     
     def simulate(self, initial_price_1, initial_price_2, num_periods=50):
         """
-        Simuliert die Preisdynamik über mehrere Perioden.
+        Simuliert die Preisdynamik über mehrere Perioden
         
         Parameters:
         initial_price_1 (float): Startpreis Unternehmen 1
@@ -85,7 +54,6 @@ class BertrandDynamics:
         Returns:
         tuple: Arrays mit Preisen, Gewinnen und Marktanteilen beider Unternehmen
         """
-        # Initialisierung der Arrays für die Ergebnisse
         prices_1 = np.zeros(num_periods)
         prices_2 = np.zeros(num_periods)
         profits_1 = np.zeros(num_periods)
@@ -93,22 +61,21 @@ class BertrandDynamics:
         shares_1 = np.zeros(num_periods)
         shares_2 = np.zeros(num_periods)
         
-        # Startpreise setzen
         prices_1[0] = initial_price_1
         prices_2[0] = initial_price_2
         
         for t in range(num_periods-1):
-            # Marktanteile berechnen
+            # Berechne Marktanteile
             shares_1[t] = self.market_share(prices_1[t], prices_2[t])
             shares_2[t] = self.market_share(prices_2[t], prices_1[t])
             
-            # Gewinne berechnen
+            # Berechne Gewinne
             profits_1[t] = self.profit(prices_1[t], prices_2[t])
             profits_2[t] = self.profit(prices_2[t], prices_1[t])
             
             # Preisanpassung mit maximaler Unterbietung
             if prices_1[t] > prices_2[t]:
-                # Unternehmen 1 passt Preis an
+                # Unternehmen 1 ist teurer und passt an
                 new_price = max(
                     self.mc,
                     prices_2[t] * (1 - np.random.uniform(0, self.max_underbid))
@@ -116,7 +83,7 @@ class BertrandDynamics:
                 prices_1[t+1] = new_price
                 prices_2[t+1] = prices_2[t]
             else:
-                # Unternehmen 2 passt Preis an
+                # Unternehmen 2 ist teurer oder gleich teuer und passt an
                 new_price = max(
                     self.mc,
                     prices_1[t] * (1 - np.random.uniform(0, self.max_underbid))
@@ -124,7 +91,7 @@ class BertrandDynamics:
                 prices_2[t+1] = new_price
                 prices_1[t+1] = prices_1[t]
         
-        # Letzte Periode: Marktanteile und Gewinne berechnen
+        # Letzte Periode
         shares_1[-1] = self.market_share(prices_1[-1], prices_2[-1])
         shares_2[-1] = self.market_share(prices_2[-1], prices_1[-1])
         profits_1[-1] = self.profit(prices_1[-1], prices_2[-1])
@@ -161,3 +128,20 @@ class BertrandDynamics:
         
         plt.tight_layout()
         plt.show()
+
+# Beispiel für die Verwendung
+model = BertrandDynamics(
+    marginal_cost=10,
+    market_size=1000,
+    max_price=50,
+    price_sensitivity=2.0  # Höhere Werte = stärkere Reaktion auf Preisunterschiede
+)
+
+# Simulation mit unterschiedlichen Startpreisen
+prices_1, prices_2, profits_1, profits_2, shares_1, shares_2 = model.simulate(
+    initial_price_1=45,
+    initial_price_2=40
+)
+
+# Visualisierung der Ergebnisse
+model.plot_results(prices_1, prices_2, profits_1, profits_2, shares_1, shares_2)
