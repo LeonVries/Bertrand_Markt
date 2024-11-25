@@ -11,6 +11,11 @@ Eine Python-Implementierung eines dynamischen Bertrand-Duopol Modells mit gradue
 - [Installation](#installation)
 - [Verwendung](#verwendung)
 - [Mathematisches Modell](#mathematisches-modell)
+  - [Parameter-Definitionen](#parameter-definitionen)
+  - [Zeitliche Notation](#zeitliche-notation)
+  - [Nachfragefunktion](#nachfragefunktion)
+  - [Präzisierung der Übergangsbegriffe](#pr%C3%A4zisierung-der-%C3%BCbergangsbegriffe)
+  - [Mathematische Einschränkungen](#mathematische-einschr%C3%A4nkungen)
 - [Unterschiede zum klassischen Bertrand-Modell](#unterschiede-zum-klassischen-bertrand-modell)
 - [Lizenz](#lizenz)
 
@@ -67,71 +72,91 @@ model.plot_results(prices_1, prices_2, profits_1, profits_2, shares_1, shares_2)
 
 ## 📐 Mathematisches Modell
 
+### Parameter-Definitionen
+
+#### Klassische Parameter
+- **`c`**: Grenzkosten der Produktion (marginal cost)
+- **`market_size`**: Maximale Nachfragemenge bei Preis = 0 (entspricht Parameter `a` im klassischen Modell)
+- **`max_price`**: Prohibitivpreis, bei dem Nachfrage = 0 (entspricht `a/b` im klassischen Modell)
+
+**Zusammenhang zum klassischen Modell:**
+
+Die Nachfragefunktion \( Q(p) = a - bp \) lässt sich wie folgt umschreiben:
+
+\[
+Q(p) = \text{market\_size} \cdot \left(1 - \frac{p}{\text{max\_price}}\right)
+\]
+
+Mit den Beziehungen:
+- \( a = \text{market\_size} \)
+- \( b = \frac{\text{market\_size}}{\text{max\_price}} \)
+
+#### Begründung der Parameterwahl
+- **`marginal_cost = 10`**: Typische Produktionskosten, ausreichend Spielraum für Preisanpassungen.
+- **`market_size = 1000`**: Repräsentative Marktgröße für Simulationen.
+- **`max_price = 50`**: Realistische Preis-Kosten-Spanne, entspricht \(5 \times \text{marginal\_cost}\).
+- **`price_sensitivity = 2.0`**: Realistische Elastizitätsschätzung.
+
+### Zeitliche Notation
+
+Die Dynamik der Preise wird wie folgt beschrieben:
+
+\[
+p_1(t+1) = \begin{cases} 
+\max(c, p_2(t) \cdot (1 - \delta(t))), & \text{wenn } p_1(t) > p_2(t) \\
+p_1(t), & \text{sonst}
+\end{cases}
+\]
+
+Mit \( \delta(t) \sim U(0, \text{max\_underbid}) \).
+
 ### Nachfragefunktion
-```
-Q(p) = market_size * (1 - p/max_price)
-```
 
-### Marktanteil
-```
-market_share(p₁, p₂) = 1 / (1 + e^(-sensitivity * (p₂ - p₁)/((p₁ + p₂)/2)))
-```
+#### Grundnachfrage
+\[
+Q(p, t) = \max(0, \text{market\_size} \cdot \left(1 - \frac{p}{\text{max\_price}}\right))
+\]
 
-### Gewinnfunktion
-```
-π₁(p₁, p₂) = (p₁ - c) * Q(p₁) * market_share(p₁, p₂)
-```
+#### Effektive Nachfrage
+Die Nachfrage eines Unternehmens \(i\) in Periode \(t\):
 
-### Preisanpassung
-```
-p₁(t+1) = max(c, p₂(t) * (1 - random(0, 0.08))), wenn p₁(t) > p₂(t)
-p₁(t+1) = p₁(t), sonst
-```
+\[
+Q_i(p_i, p_j, t) = Q(p_i, t) \cdot s_i(t)
+\]
+
+### Präzisierung der Übergangsbegriffe
+
+- **Granulare Preisanpassung**:
+  - Schrittweise Änderungen (max. 8% pro Periode)
+  - Diskrete Zeitschritte
+- **Differenzierbare Marktanteilsfunktion**:
+  - Logistische Funktion mit stetiger erster Ableitung
+  - Stetige Übergänge
+- **Approximative Nash-Dynamik**:
+  - Diskrete Zeitentwicklung, Annäherung an das Nash-Gleichgewicht.
+
+### Mathematische Einschränkungen
+
+- **Diskrete Zeitschritte**: \( t \in \{0, 1, \ldots, T-1\} \).
+- **Endliche Preisänderungen**: \( \Delta p_i(t) \leq \text{max\_underbid} \cdot p_i(t) \).
+- **Begrenzte Wertebereiche**:
+  - \( p_i(t) \in [c, \text{max\_price}] \).
+  - \( s_i(t) \in [0, 1] \).
+  - \( Q_i(t) \in [0, \text{market\_size}] \).
 
 ## 📊 Unterschiede zum klassischen Bertrand-Modell
 
 ### Klassisches Modell
-- Binäre Marktaufteilung (Winner-takes-all)
-- Sofortige Preisanpassung
-- Nash-Gleichgewicht bei Grenzkosten
-- Keine explizite Zeitdimension
+- **Binäre Marktaufteilung** (Winner-takes-all).
+- **Sofortige Preisanpassung**.
+- Nash-Gleichgewicht bei Grenzkosten.
+- Keine explizite Zeitdimension.
 
-### Unser dynamisches Modell
-- Kontinuierliche Marktaufteilung durch logistische Funktion
-- Graduelle Preisanpassung (max. 8% pro Periode)
-- Realistische Marktdynamik
-- Explizite Modellierung der zeitlichen Entwicklung
-
-### Hauptinnovationen
-1. **Logistische Marktanteilsfunktion**
-   - Stetige Übergänge
-   - Parametrisierbare Preissensitivität
-   - Realistische Nachfrageverteilung
-
-2. **Gedämpfte Preisanpassung**
-   - Verhindert unrealistische Preissprünge
-   - Modelliert Marktträgheit
-
-3. **Relative Preisdifferenzen**
-   - Berücksichtigt relative statt absolute Preisunterschiede
-   - Realistische Konsumentenwahrnehmung
-
-## 📈 Beispiel-Output
-
-Das Modell erzeugt drei Grafiken:
-1. Preisentwicklung beider Unternehmen
-2. Gewinnentwicklung im Zeitverlauf
-3. Marktanteilsentwicklung
-
-## 🔬 Parameter
-
-| Parameter | Beschreibung | Standardwert |
-|-----------|--------------|--------------|
-| `marginal_cost` | Grenzkosten der Produktion | - |
-| `market_size` | Maximale Marktnachfrage | - |
-| `max_price` | Maximaler Preis | - |
-| `max_underbid` | Maximale Preissenkung pro Periode | 0.08 |
-| `price_sensitivity` | Preissensitivität der Kunden | 2.0 |
+### Dynamisches Modell
+- **Kontinuierliche Marktaufteilung** durch logistische Funktion.
+- **Graduelle Preisanpassung** (max. 8% pro Periode).
+- **Realistische Marktdynamik**.
+- Explizite zeitliche Modellierung.
 
 ## 📄 Lizenz
 
@@ -146,124 +171,3 @@ Beiträge sind willkommen! Bitte lesen Sie [CONTRIBUTING.md](CONTRIBUTING.md) f�
 Leon de Vries - (leondevries.de) - mail@leondevries.de
 
 Projekt Link: [https://github.com/LeonVries/basic](https://github.com/LeonVries/basic)
-
-
-
-# Im Detail: Klassisches Bertrand-Modell vs. Dynamisches Modell
-
-## 1. Nachfragefunktion
-
-### Klassisches Bertrand-Modell
-
-- **Lineare Nachfragefunktion**: Q(p) = a - b * p
-- Verhalten:
-  - Bei p₁ < p₂: Firma 1 erhält die gesamte Nachfrage.
-  - Bei p₁ = p₂: Nachfrage wird gleichmäßig aufgeteilt (50/50).
-  - Bei p₁ > p₂: Firma 1 erhält keine Nachfrage.
-- Mathematisch ausgedrückt:
-  - Wenn p₁ < p₂: Q₁ = a - b * p₁
-  - Wenn p₁ = p₂: Q₁ = (a - b * p₁) / 2
-  - Wenn p₁ > p₂: Q₁ = 0
-
-### Unser dynamisches Modell
-
-- **Grundnachfrage**:  
-  Q(p) = market_size * (1 - p / max_price)
-- **Logistische Marktaufteilung basierend auf Preisdifferenzen**:  
-  market_share(p₁, p₂) = 1 / (1 + e^(-sensitivity * ((p₂ - p₁) / ((p₁ + p₂) / 2))))
-- **Gesamtnachfrage**:  
-  Q₁(p₁, p₂) = Q(p₁) * market_share(p₁, p₂)
-
----
-
-## 2. Gewinnfunktion
-
-### Klassisches Bertrand-Modell
-
-- Gewinnfunktion:  
-  - Wenn p₁ < p₂: π₁ = (p₁ - c) * (a - b * p₁)
-  - Wenn p₁ = p₂: π₁ = (p₁ - c) * (a - b * p₁) / 2
-  - Wenn p₁ > p₂: π₁ = 0
-
-### Unser dynamisches Modell
-
-- Gewinnfunktion:  
-  π₁(p₁, p₂) = (p₁ - c) * market_size * (1 - p₁ / max_price) * market_share(p₁, p₂)
-
----
-
-## 3. Preisanpassungsmechanismus
-
-### Klassisches Bertrand-Modell
-
-- Verhalten:
-  - Sofortige Anpassung zum Nash-Gleichgewicht.
-  - Nash-Gleichgewicht: p₁ = p₂ = c
-  - Keine explizite Zeitdynamik.
-
-### Unser dynamisches Modell
-
-- **Graduelle Preisanpassung** mit maximaler Änderungsrate von 8% pro Periode:
-  - Wenn p₁(t) > p₂(t):  
-    p₁(t+1) = max(c, p₂(t) * (1 - random(0, 0.08)))
-  - Sonst:  
-    p₁(t+1) = p₁(t)
-
----
-
-## 4. Hauptunterschiede und Erweiterungen
-
-- **Marktaufteilung**:
-  - Klassisch: Diskrete "Winner-takes-all"-Struktur.
-  - Dynamisch: Kontinuierliche Marktaufteilung durch logistische Funktion.
-
-- **Zeitliche Dimension**:
-  - Klassisch: Statisches Gleichgewicht.
-  - Dynamisch: Explizite Modellierung der Anpassungsdynamik.
-
-- **Preisanpassung**:
-  - Klassisch: Instantan.
-  - Dynamisch: Graduell mit Maximalrate.
-
-- **Nachfrageverteilung**:
-  - Klassisch: Binär (alles oder nichts).
-  - Dynamisch: Kontinuierlich basierend auf relativem Preisunterschied.
-
----
-
-## 5. Nash-Gleichgewicht
-
-### Klassisches Bertrand-Modell
-
-- Nash-Gleichgewicht bei:  
-  p₁ = p₂ = c
-- Sofortige Konvergenz.
-- **"Bertrand-Paradox"**: Null-Gewinn im Gleichgewicht.
-
-### Unser dynamisches Modell
-
-- Gleiches Nash-Gleichgewicht:  
-  p₁ = p₂ = c
-- Graduelle Konvergenz zum Gleichgewicht.
-- Positive Gewinne während des Anpassungsprozesses.
-- Realistischere Abbildung der Marktdynamik.
-
----
-
-## 6. Mathematische Innovationen unseres Modells
-
-- **Logistische Marktanteilsfunktion**:
-  - market_share = 1 / (1 + e^(-sensitivity * price_diff))
-  - Ermöglicht stetige Übergänge.
-  - Parametrisierbare Preissensitivität.
-  - Vermeidet unrealistische Sprünge in der Nachfrage.
-
-- **Gedämpfte Preisanpassung**:
-  - new_price = max(c, old_price * (1 - random(0, max_adjustment)))
-  - Verhindert unrealistische Preissprünge.
-  - Modelliert Trägheit im Markt.
-
-- **Relative Preisdifferenzen**:
-  - price_diff = (p₂ - p₁) / ((p₁ + p₂) / 2)
-  - Berücksichtigt relative statt absolute Preisunterschiede.
-  - Realistischere Abbildung der Konsumentenwahrnehmung.
